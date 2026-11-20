@@ -4,14 +4,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>منصة أ. أحمد إمام | تحصيلي الأحياء وتدريبات الثانوي</title>
-    <meta name="description" content="منصة تدريبية تفاعلية لاختبارات تحصيلي الأحياء مع تجميعات السنوات السابقة وشروحات مبسطة لمناهج أحياء 1 وأحياء 2.">
+    <meta name="description" content="منصة تفاعلية لاختبارات تحصيلي الأحياء مع تجميعات السنوات السابقة وشروحات مبسطة لمناهج أحياء 1 وأحياء 2-1 وأحياء 2-2 وعلم البيئة.">
     <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
     <style>
         :root {
-            --primary: #0f766e;       /* أخضر زمردي هادئ ومريح للعين */
+            --primary: #0f766e;
             --primary-dark: #115e59;
             --primary-light: #ccfbf1;
-            --secondary: #0369a1;     /* أزرق علمي */
+            --secondary: #0369a1;
             --bg-body: #f8fafc;
             --bg-card: #ffffff;
             --text-main: #1e293b;
@@ -36,225 +36,182 @@
             background-color: var(--bg-body);
             color: var(--text-main);
             line-height: 1.6;
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
         }
 
-        /* الهيدر العلوي */
         header {
-            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
             color: white;
-            padding: 1.5rem 1rem;
+            padding: 2rem 1rem;
             text-align: center;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            box-shadow: 0 4px 12px rgba(15, 118, 110, 0.2);
         }
 
         header h1 {
-            font-size: 1.75rem;
+            font-size: 1.9rem;
             font-weight: 800;
-            margin-bottom: 0.3rem;
+            margin-bottom: 0.4rem;
         }
 
         header p {
-            font-size: 0.95rem;
-            opacity: 0.9;
+            font-size: 1.05rem;
+            opacity: 0.92;
         }
 
         .container {
-            width: 100%;
-            max-width: 850px;
+            max-width: 900px;
             margin: 2rem auto;
             padding: 0 1rem;
-            flex: 1;
         }
 
-        /* شاشة اختيار الاختبار */
-        .welcome-card {
+        .controls-card {
             background: var(--bg-card);
+            padding: 1.25rem;
             border-radius: var(--radius);
-            padding: 2rem;
             box-shadow: var(--shadow);
+            margin-bottom: 1.5rem;
             border: 1px solid var(--border);
         }
 
-        .section-title {
-            font-size: 1.15rem;
-            font-weight: 700;
-            color: var(--primary-dark);
-            margin: 1.5rem 0 0.8rem;
+        .filters {
             display: flex;
-            align-items: center;
-            gap: 8px;
+            flex-wrap: wrap;
+            gap: 0.6rem;
+            justify-content: center;
+            margin-bottom: 1rem;
         }
 
-        .section-title:first-child {
-            margin-top: 0;
-        }
-
-        .grid-options {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-            gap: 1rem;
-        }
-
-        .quiz-type-btn {
-            background: var(--bg-body);
-            border: 2px solid var(--border);
-            border-radius: 12px;
-            padding: 1.2rem;
-            text-align: right;
+        .filter-btn {
+            background: #f1f5f9;
+            color: var(--text-main);
+            border: 1px solid var(--border);
+            padding: 0.55rem 1.2rem;
+            border-radius: 50px;
+            font-size: 0.95rem;
+            font-weight: 700;
             cursor: pointer;
             transition: all 0.2s ease;
-            display: flex;
-            flex-direction: column;
-            gap: 5px;
         }
 
-        .quiz-type-btn:hover {
-            border-color: var(--primary);
+        .filter-btn:hover {
             background: var(--primary-light);
-            transform: translateY(-2px);
+            color: var(--primary-dark);
         }
 
-        .quiz-type-btn strong {
-            font-size: 1.05rem;
-            color: var(--text-main);
-        }
-
-        .quiz-type-btn span {
-            font-size: 0.85rem;
-            color: var(--text-muted);
-        }
-
-        .btn-featured {
+        .filter-btn.active {
             background: var(--primary);
             color: white;
             border-color: var(--primary);
-            grid-column: 1 / -1;
-            text-align: center;
+        }
+
+        .stats-bar {
+            display: flex;
+            justify-content: space-between;
             align-items: center;
+            padding-top: 0.8rem;
+            border-top: 1px solid var(--border);
+            font-size: 0.95rem;
+            color: var(--text-muted);
+            font-weight: 700;
         }
 
-        .btn-featured:hover {
-            background: var(--primary-dark);
-            color: white;
+        .stats-bar span strong {
+            color: var(--primary);
+            font-size: 1.1rem;
         }
 
-        .btn-featured strong, .btn-featured span {
-            color: white;
+        .reset-btn {
+            background: none;
+            border: 1px solid var(--border);
+            color: var(--text-muted);
+            padding: 0.35rem 0.9rem;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 700;
+            font-size: 0.85rem;
         }
 
-        /* شاشة الاختبار */
-        .quiz-box {
-            display: none;
+        .reset-btn:hover {
+            background: #f1f5f9;
+            color: var(--text-main);
+        }
+
+        .question-card {
             background: var(--bg-card);
             border-radius: var(--radius);
-            padding: 1.8rem;
+            padding: 1.5rem;
+            margin-bottom: 1.25rem;
             box-shadow: var(--shadow);
             border: 1px solid var(--border);
         }
 
-        .quiz-header {
+        .q-meta {
             display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding-bottom: 1rem;
-            margin-bottom: 1.5rem;
-            border-bottom: 1px solid var(--border);
-            flex-wrap: wrap;
-            gap: 10px;
-        }
-
-        .progress-info {
-            font-weight: 700;
-            color: var(--primary-dark);
-        }
-
-        .timer-badge {
-            background: #f1f5f9;
-            padding: 0.4rem 0.9rem;
-            border-radius: 20px;
-            font-weight: 700;
-            color: var(--secondary);
-            font-size: 0.95rem;
-        }
-
-        .meta-tags {
-            display: flex;
-            gap: 8px;
-            margin-bottom: 1rem;
+            gap: 0.5rem;
+            margin-bottom: 0.9rem;
             flex-wrap: wrap;
         }
 
-        .tag {
+        .badge {
             font-size: 0.8rem;
             font-weight: 700;
             padding: 0.25rem 0.75rem;
-            border-radius: 6px;
+            border-radius: 20px;
         }
 
-        .tag-year {
-            background: #fef3c7;
-            color: #b45309;
+        .badge-subject {
+            background: var(--primary-light);
+            color: var(--primary-dark);
         }
 
-        .tag-subject {
+        .badge-year {
             background: #e0f2fe;
-            color: #0369a1;
+            color: var(--secondary);
         }
 
-        .question-text {
-            font-size: 1.25rem;
+        .q-text {
+            font-size: 1.15rem;
             font-weight: 700;
-            margin-bottom: 1.5rem;
+            margin-bottom: 1.2rem;
             color: var(--text-main);
         }
 
-        .options-list {
-            display: flex;
-            flex-direction: column;
-            gap: 0.8rem;
+        .options-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 0.7rem;
+        }
+
+        @media (min-width: 640px) {
+            .options-grid {
+                grid-template-columns: 1fr 1fr;
+            }
         }
 
         .option-btn {
-            background: var(--bg-body);
-            border: 2px solid var(--border);
-            border-radius: 10px;
-            padding: 1rem 1.2rem;
             text-align: right;
-            font-size: 1.05rem;
+            background: #f8fafc;
+            border: 2px solid var(--border);
+            padding: 0.85rem 1rem;
+            border-radius: 10px;
+            font-size: 1rem;
             font-weight: 500;
+            color: var(--text-main);
             cursor: pointer;
-            transition: all 0.15s ease;
+            transition: all 0.2s ease;
             display: flex;
             align-items: center;
-            gap: 12px;
+            gap: 0.6rem;
         }
 
         .option-btn:hover:not(:disabled) {
-            border-color: var(--secondary);
-            background: #f0f9ff;
+            border-color: var(--primary);
+            background: #f0fdfa;
         }
 
         .option-btn:disabled {
             cursor: default;
         }
 
-        .option-letter {
-            background: white;
-            border: 1px solid var(--border);
-            width: 32px;
-            height: 32px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: 700;
-            flex-shrink: 0;
-        }
-
-        /* حالات الإجابة */
         .option-btn.correct {
             background: var(--success-bg);
             border-color: var(--success);
@@ -262,438 +219,315 @@
             font-weight: 700;
         }
 
-        .option-btn.correct .option-letter {
-            background: var(--success);
-            color: white;
-            border-color: var(--success);
-        }
-
         .option-btn.wrong {
             background: var(--danger-bg);
             border-color: var(--danger);
             color: #7f1d1d;
-        }
-
-        .option-btn.wrong .option-letter {
-            background: var(--danger);
-            color: white;
-            border-color: var(--danger);
-        }
-
-        /* صندوق الشرح */
-        .explanation-box {
-            display: none;
-            margin-top: 1.5rem;
-            padding: 1.1rem;
-            background: #f0fdf4;
-            border-right: 4px solid var(--success);
-            border-radius: 8px;
-            font-size: 0.98rem;
-        }
-
-        .explanation-box strong {
-            color: var(--success);
-            display: block;
-            margin-bottom: 4px;
-        }
-
-        .quiz-footer {
-            margin-top: 1.8rem;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .btn {
-            padding: 0.75rem 1.5rem;
-            border: none;
-            border-radius: 8px;
-            font-size: 1rem;
             font-weight: 700;
-            cursor: pointer;
-            transition: opacity 0.2s;
         }
 
-        .btn:hover {
-            opacity: 0.9;
-        }
-
-        .btn-primary {
-            background: var(--primary);
-            color: white;
-        }
-
-        .btn-outline {
-            background: transparent;
-            border: 1px solid var(--border);
-            color: var(--text-muted);
-        }
-
-        /* شاشة النتيجة */
-        .result-box {
-            display: none;
-            background: var(--bg-card);
-            border-radius: var(--radius);
-            padding: 2.5rem 1.8rem;
-            box-shadow: var(--shadow);
-            border: 1px solid var(--border);
-            text-align: center;
-        }
-
-        .score-circle {
-            width: 130px;
-            height: 130px;
+        .option-letter {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 28px;
+            height: 28px;
             border-radius: 50%;
-            background: var(--primary-light);
-            color: var(--primary-dark);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            margin: 0 auto 1.5rem;
-            border: 4px solid var(--primary);
-        }
-
-        .score-circle .percent {
-            font-size: 2rem;
-            font-weight: 800;
-            line-height: 1;
-        }
-
-        .score-circle .fraction {
-            font-size: 0.95rem;
-            font-weight: 700;
-            margin-top: 4px;
-        }
-
-        .stats-row {
-            display: flex;
-            justify-content: center;
-            gap: 2rem;
-            margin: 1.5rem 0 2rem;
-            flex-wrap: wrap;
-        }
-
-        .stat-item {
-            background: var(--bg-body);
-            padding: 0.8rem 1.5rem;
-            border-radius: 10px;
+            background: white;
             border: 1px solid var(--border);
-        }
-
-        .stat-item span {
-            display: block;
+            font-weight: 700;
             font-size: 0.85rem;
-            color: var(--text-muted);
+            flex-shrink: 0;
         }
 
-        .stat-item strong {
-            font-size: 1.15rem;
-            color: var(--text-main);
+        .explanation-box {
+            margin-top: 1rem;
+            padding: 1rem;
+            background: #f0f9ff;
+            border-right: 4px solid var(--secondary);
+            border-radius: 8px;
+            font-size: 0.95rem;
+            color: #0c4a6e;
+            display: none;
+        }
+
+        .explanation-box.show {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-4px); }
+            to { opacity: 1; transform: translateY(0); }
         }
 
         footer {
             text-align: center;
-            padding: 1.5rem;
+            padding: 2rem 1rem;
             color: var(--text-muted);
             font-size: 0.9rem;
-            border-top: 1px solid var(--border);
-            background: white;
-            margin-top: auto;
         }
     </style>
 </head>
 <body>
 
 <header>
-    <!-- يمكنك تغيير اسم المنصة والوصف من السطرين التاليين في أي وقت -->
-    <h1 id="platform-title">منصة أ. أحمد إمام لتحصيلي الأحياء</h1>
-    <p id="platform-subtitle">بنك الأسئلة التفاعلي وتجميعات السنوات السابقة ومناهج المرحلة الثانوية</p>
+    <h1>منصة أ. أحمد إمام للأحياء</h1>
+    <p>تدريبات وتجميعات الاختبار التحصيلي للمرحلة الثانوية</p>
 </header>
 
 <div class="container">
-    <!-- 1. الشاشة الرئيسية لاختيار نوع الاختبار -->
-    <div id="home-screen" class="welcome-card">
-        <div class="section-title">🎯 اختبارات التحصيلي الشاملة</div>
-        <div class="grid-options">
-            <button class="quiz-type-btn btn-featured" onclick="startQuiz('all', 'الاختبار الشامل (جميع الأسئلة)')">
-                <strong>بدء الاختبار الشامل المحاكي للتحصيلي</strong>
-                <span>يشمل جميع أسئلة التجميعات والمناهج مع التصحيح الفوري</span>
-            </button>
+    <div class="controls-card">
+        <div class="filters">
+            <button class="filter-btn active" onclick="filterQuestions('all', this)">الكل</button>
+            <button class="filter-btn" onclick="filterQuestions('أحياء 1', this)">أحياء 1</button>
+            <button class="filter-btn" onclick="filterQuestions('أحياء 2-1', this)">أحياء 2-1</button>
+            <button class="filter-btn" onclick="filterQuestions('أحياء 2-2', this)">أحياء 2-2</button>
+            <button class="filter-btn" onclick="filterQuestions('علم البيئة', this)">علم البيئة</button>
         </div>
-
-        <div class="section-title">📅 التجميعات حسب سنة الورود</div>
-        <div class="grid-options">
-            <button class="quiz-type-btn" onclick="startQuiz('year', '1447')">
-                <strong>تجميعات عام 1447 هـ</strong>
-                <span>أحدث الأسئلة الواردة في الاختبار</span>
-            </button>
-            <button class="quiz-type-btn" onclick="startQuiz('year', '1446')">
-                <strong>تجميعات عام 1446 هـ</strong>
-                <span>أسئلة الفترتين الأولى والثانية</span>
-            </button>
-            <button class="quiz-type-btn" onclick="startQuiz('year', '1445')">
-                <strong>تجميعات عام 1445 هـ</strong>
-                <span>أهم الأسئلة المتكررة</span>
-            </button>
-        </div>
-
-        <div class="section-title">📚 اختبارات حسب المنهج الدراسي</div>
-        <div class="grid-options">
-            <button class="quiz-type-btn" onclick="startQuiz('subject', 'أحياء 1')">
-                <strong>مقرر أحياء 1 (أولى ثانوي)</strong>
-                <span>مقدمة في الأحياء، التصنيف، الفيروسات، الطلائعيات</span>
-            </button>
-            <button class="quiz-type-btn" onclick="startQuiz('subject', 'أحياء 2')">
-                <strong>مقرر أحياء 2 (ثاني ثانوي)</strong>
-                <span>اللافقاريات، شوكيات الجلد، الفقاريات، النباتات</span>
-            </button>
+        <div class="stats-bar">
+            <span>النتيجة: <strong id="score">0</strong> / <strong id="answered">0</strong></span>
+            <span>عدد الأسئلة المعروضة: <strong id="total-count">0</strong></span>
+            <button class="reset-btn" onclick="resetQuiz()">إعادة المحاولة</button>
         </div>
     </div>
 
-    <!-- 2. شاشة الاختبار -->
-    <div id="quiz-screen" class="quiz-box">
-        <div class="quiz-header">
-            <div class="progress-info" id="progress-text">السؤال 1 من 5</div>
-            <div class="timer-badge">⏱️ <span id="timer">00:00</span></div>
-        </div>
-
-        <div class="meta-tags">
-            <span class="tag tag-subject" id="q-subject">أحياء 1</span>
-            <span class="tag tag-year" id="q-year">ورد في تحصيلي 1446</span>
-        </div>
-
-        <div class="question-text" id="question-text">نص السؤال يظهر هنا...</div>
-
-        <div class="options-list" id="options-container"></div>
-
-        <div class="explanation-box" id="explanation-box">
-            <strong>💡 التوضيح العلمي:</strong>
-            <span id="explanation-text"></span>
-        </div>
-
-        <div class="quiz-footer">
-            <button class="btn btn-outline" onclick="goHome()">خروج للقائمة</button>
-            <button class="btn btn-primary" id="next-btn" onclick="nextQuestion()" style="display: none;">السؤال التالي ⬅</button>
-        </div>
-    </div>
-
-    <!-- 3. شاشة النتيجة -->
-    <div id="result-screen" class="result-box">
-        <h2 style="margin-bottom: 1rem; color: var(--primary-dark);">اكتمل الاختبار بنجاح!</h2>
-        <div class="score-circle">
-            <div class="percent" id="result-percent">100%</div>
-            <div class="fraction" id="result-fraction">5 / 5</div>
-        </div>
-        <p id="result-message" style="font-size: 1.1rem; font-weight: 700; color: var(--text-main);"></p>
-
-        <div class="stats-row">
-            <div class="stat-item">
-                <span>الإجابات الصحيحة</span>
-                <strong id="stat-correct" style="color: var(--success);">0</strong>
-            </div>
-            <div class="stat-item">
-                <span>الإجابات الخاطئة</span>
-                <strong id="stat-wrong" style="color: var(--danger);">0</strong>
-            </div>
-            <div class="stat-item">
-                <span>الزمن المستغرق</span>
-                <strong id="stat-time">00:00</strong>
-            </div>
-        </div>
-
-        <button class="btn btn-primary" onclick="goHome()">العودة لاختيار اختبار آخر</button>
-    </div>
+    <div id="questions-container"></div>
 </div>
 
 <footer>
-    جميع الحقوق محفوظة © 2026 - إعداد وتطوير أ. أحمد إمام سليمان
+    إعداد وتصميم: أ. أحمد إمام سليمان - معلم الأحياء للمرحلة الثانوية
 </footer>
 
 <script>
-    // =========================================================================
-    // قاعدة بيانات الأسئلة (هنا يمكنك إضافة أو تعديل أي سؤال بسهولة)
-    // =========================================================================
     const questionsBank = [
         {
-            question: "أي المخلوقات الحية التالية يمتلك جهازاً وعائياً مائياً وأقداماً أنبوبية؟",
-            options: ["نجم البحر", "الإسفنج", "قنديل البحر", "دودة الأرض"],
+            question: "أي من التالي يمثل الترتيب الصحيح لخطوات الطريقة العلمية؟",
+            options: ["طرح السؤال، الفرضية، التجربة، تحليل البيانات", "الفرضية، طرح السؤال، التجربة، الاستنتاج", "التجربة، الفرضية، جمع البيانات، الاستنتاج", "طرح السؤال، التجربة، الفرضية، الاستنتاج"],
+            correctIndex: 0,
+            year: "1447",
+            subject: "أحياء 1",
+            explanation: "تبدأ الطريقة العلمية بالملاحظة وطرح السؤال، تليها صياغة الفرضية، ثم اختبارها بالتجربة وتجميع البيانات وتحليلها وصولاً للاستنتاج."
+        },
+        {
+            question: "في تجربة لدراسة أثر الضوء على نمو النباتات، يُعد نمو النباتات الناتج عن كمية الضوء:",
+            options: ["متغيراً تابعاً", "متغيراً مستقلاً", "مجموعة ضابطة", "ثابتاً تجريبياً"],
             correctIndex: 0,
             year: "1446",
-            subject: "أحياء 2",
-            explanation: "نجم البحر ينتمي لشعبة شوكيات الجلد التي تتميز بوجود الجهاز الوعائي المائي والأقدام الأنبوبية للحركة والتغذي."
+            subject: "أحياء 1",
+            explanation: "المتغير التابع هو العامل الذي ينتج عن المتغير المستقل (الضوء) ويعتمد عليه أثناء التجربة."
         },
         {
-            question: "عند فحص خلية بكتيرية تحت المجهر، أي التراكيب التالية تتوقع عدم وجوده فيها؟",
-            options: ["الغشاء البلازمي", "الرايبوسومات", "الغشاء النووي", "الجدار الخلوي"],
-            correctIndex: 2,
+            question: "ما المصنف الذي يضم مجموعة من المخلوقات الحية المتشابهة في الشكل والتركيب والقادرة على التزاوج وإنتاج نسل خصب؟",
+            options: ["النوع", "الجنس", "الفصيلة", "الرتبة"],
+            correctIndex: 0,
             year: "1447",
             subject: "أحياء 1",
-            explanation: "البكتيريا مخلوقات بدائية النوى، لذا فإن مادتها الوراثية غير محاطة بغشاء نووي."
+            explanation: "النوع هو أصغر مستويات التصنيف وأكثرها تحديداً، ويشترط قدرة أفراده على التزاوج وإنتاج نسل خصب."
         },
         {
-            question: "ما الهرمون النباتي المسؤول عن إنضاج الثمار وتساقط الأوراق؟",
-            options: ["الأكسين", "الإيثيلين", "الجبريلين", "السايتوكاينين"],
-            correctIndex: 1,
+            question: "أي من الممالك التالية يضم مخلوقات حقيقية النوى، غير ذاتية التغذي، وجدارها الخلوي مكون من الكايتين؟",
+            options: ["الفطريات", "النباتات", "الطلائعيات", "البدائيات"],
+            correctIndex: 0,
             year: "1446",
-            subject: "أحياء 2",
-            explanation: "الإيثيلين هو الهرمون الغازي الوحيد في النباتات ويُفرز لتحفيز نضج الثمار."
-        },
-        {
-            question: "أي المستويات التصنيفية التالية يضم أكبر عدد من المخلوقات الحية؟",
-            options: ["الشعبة", "الطائفة", "المملكة", "الرتبة"],
-            correctIndex: 2,
-            year: "1445",
             subject: "أحياء 1",
-            explanation: "الترتيب من الأكبر للأصغر: فوق المملكة > المملكة > الشعبة > الطائفة > الرتبة > الفصيلة > الجنس > النوع."
+            explanation: "تتميز مملكة الفطريات بوجود مادة الكايتين في جدارها الخلوي وهي مخلوقات حقيقية النوى غير ذاتية التغذي."
         },
         {
-            question: "في أي طور من الانقسام المتساوي تصطف الكروموسومات في وسط الخلية؟",
-            options: ["التمهيدي", "الاستوائي", "الانفصالي", "النهائي"],
-            correctIndex: 1,
+            question: "تُستخدم صبغة جرام في المختبرات الطبية لتحديد نوع الجدار الخلوي للبكتيريا؛ فإذا تلون الجدار باللون الوردي الفاتح فإن البكتيريا:",
+            options: ["سالبة جرام وتحتوي كمية قليلة من الببتيدوجلايكان", "موجبة جرام وتحتوي طبقة سميكة من الببتيدوجلايكان", "بدائية تخلو من الببتيدوجلايكان تماماً", "مقاومة لجميع المضادات الحيوية"],
+            correctIndex: 0,
             year: "1447",
-            subject: "أحياء 2",
-            explanation: "في الطور الاستوائي ترتبط خيوط المغزل بالسنترومير وتصطف الكروموسومات على خط استواء الخلية."
+            subject: "أحياء 1",
+            explanation: "البكتيريا سالبة جرام تمتلك طبقة خارجية من الدهون وكمية قليلة من الببتيدوجلايكان فتظهر باللون الوردي الفاتح."
         },
         {
-            question: "المسبب لمرض النوم الأفريقي هو طفيل التريبانوسوما، وينقله للإنسان:",
-            options: ["بعوضة الأنوفليس", "ذبابة التسي تسي", "بق الردوفييد", "ذبابة الرمل"],
-            correctIndex: 1,
+            question: "وجود بكتيريا إشيرشيا كولاي (E. coli) في عينات المياه يُعد مؤشراً على:",
+            options: ["تلوث المياه بمياه الصرف الصحي", "نقاء المياه وصلاحيتها للشرب", "ارتفاع نسبة الأكسجين المذاب", "زيادة نسبة الأملاح المعدنية"],
+            correctIndex: 0,
             year: "1445",
             subject: "أحياء 1",
-            explanation: "ذبابة التسي تسي تنقل طفيل التريبانوسوما المسبب لمرض النوم الأفريقي، بينما ينقل بق الردوفييد مرض النوم الأمريكي."
+            explanation: "تعيش بكتيريا إشيرشيا كولاي في أمعاء الإنسان وتُطرح مع الفضلات، لذا فوجودها في الماء يدل على تلوثه بمياه الصرف الصحي."
+        },
+        {
+            question: "ما التركيب الذي يميز الفيروسات الارتجاعية مثل فيروس نقص المناعة المكتسبة (HIV)؟",
+            options: ["وجود مادة RNA وإنزيم النسخ العكسي", "وجود مادة DNA مزدوجة الشريط", "قدرتها على التكاثر خارج خلايا العائل", "امتلاكها جداراً خلوياً من السليلوز"],
+            correctIndex: 0,
+            year: "1447",
+            subject: "أحياء 1",
+            explanation: "الفيروس الارتجاعي مادته الوراثية RNA ويستخدم إنزيم النسخ العكسي لتحويلها إلى DNA داخل خلية العائل."
+        },
+        {
+            question: "أي من الطلائعيات التالية تُستخدم جدرها الخلوية المكونة من السيليكا في تلميع الأسنان والفلزات؟",
+            options: ["الدياتومات", "السوطيات الدوارة", "اليوجلينات", "الهدبيات"],
+            correctIndex: 0,
+            year: "1446",
+            subject: "أحياء 1",
+            explanation: "تتكون جدر الدياتومات من مادة السيليكا القاسية، وعندما تموت تترسب في قاع المحيط وتُستخدم في تلميع الأسنان والفلزات."
+        },
+        {
+            question: "تُعد الأشنات مؤشراً حيوياً مهماً في البيئة لأنها:",
+            options: ["سريعة التأثر بملوثات الهواء وتدل على نقاء الجو", "تتكاثر بسرعة في البيئات شديدة التلوث", "تسبب أمراضاً تنفسية للإنسان", "تتطفل على جذور النباتات وتقتلها"],
+            correctIndex: 0,
+            year: "1447",
+            subject: "أحياء 1",
+            explanation: "المؤشر الحيوي مخلوق حساس للظروف البيئية المتغيرة، والأشنات تمتص الماء والغذاء من الهواء مباشرة فتتأثر سريعاً بالتلوث."
+        },
+        {
+            question: "تتميز شعبة الإسفنجيات عن بقية شعب المملكة الحيوانية بأنها:",
+            options: ["عديمة التناظر ولا تمتلك أنسجة أو أعضاء", "ذات تناظر شعاعي وتجويف معوي وعائي", "ذات تناظر جانبي وتجويف جسمي كاذب", "ثانوية الفم وحقيقية التجويف الجسمي"],
+            correctIndex: 0,
+            year: "1446",
+            subject: "أحياء 1",
+            explanation: "الإسفنجيات هي أبسط الحيوانات، وتتميز بأنها عديمة التناظر وتفتقر إلى الأنسجة والأعضاء والأجهزة."
+        },
+        {
+            question: "أي من المخلوقات الحية التالية يُعد من المخلوقات حقيقية التجويف الجسمي وثانوية الفم؟",
+            options: ["شوكيات الجلد والحبليات", "الرخويات والمفصليات", "الديدان الحلقية والديدان المفلطحة", "الديدان الأسطوانية والدوارات"],
+            correctIndex: 0,
+            year: "1447",
+            subject: "أحياء 1",
+            explanation: "شوكيات الجلد والحبليات هما الشعبتان الوحيدتان اللتان تتكون فيهما فتحة الشرج من أول فتحة في الجاسترولا (ثانوية الفم)."
+        },
+        {
+            question: "أي من طوائف الديدان الأسطوانية التالية لا يمكن اكتشاف الإصابة بها عن طريق تحليل البراز؟",
+            options: ["ديدان الفيلاريا", "ديدان الإسكارس", "الديدان الدبوسية", "الديدان الخطافية"],
+            correctIndex: 0,
+            year: "1446",
+            subject: "أحياء 1",
+            explanation: "تعيش ديدان الفيلاريا المسببة لداء الفيل في الجهاز الليمفي للإنسان وليس في القناة الهضمية، لذا لا تظهر في تحليل البراز."
+        },
+        {
+            question: "تعتمد الرخويات سريعة الحركة كالأخطبوط والحبار في حركتها السريعة تحت الماء على:",
+            options: ["الدفع النفاث عبر السيفون", "القدم العضلية للزحف", "الأقدام الأنبوبية", "الأهداب الخارجية"],
+            correctIndex: 0,
+            year: "1445",
+            subject: "أحياء 1",
+            explanation: "يسحب الأخطبوط والحبار الماء إلى تجويف العباءة ثم يضخه بقوة عبر أنبوب السيفون للاندفاع السريع."
+        },
+        {
+            question: "يتم الإخراج والحفاظ على التوازن المائي في معظم المفصليات بواسطة أنابيب ملبيجي، باستثناء القشريات التي تستخدم:",
+            options: ["النفريديا", "الخلايا اللهبية", "الفجوات المنقبضة", "القصبات الهوائية"],
+            correctIndex: 0,
+            year: "1447",
+            subject: "أحياء 1",
+            explanation: "تتخلص المفصليات من فضلاتها عبر أنابيب ملبيجي المتصلة بالأمعاء، بينما تستخدم القشريات النفريديا."
+        },
+        {
+            question: "أي من الحشرات التالية يمر بتحول غير كامل (بيضة ← حورية ← حشرة بالغة)؟",
+            options: ["الجراد", "الفراش", "النحل", "الخنفساء"],
+            correctIndex: 0,
+            year: "1447",
+            subject: "أحياء 1",
+            explanation: "التحول غير الكامل يمر بثلاث مراحل فقط دون مرحلة العذراء، ومن أمثلته الجراد والنمل الأبيض واليعسوب."
         }
     ];
 
-    // متغيرات التحكم في الاختبار
-    let currentQuestions = [];
-    let currentIndex = 0;
+    let currentFilter = 'all';
     let score = 0;
-    let timerInterval;
-    let secondsElapsed = 0;
-    const letters = ["أ", "ب", "ج", "د"];
+    let answered = 0;
+    const letters = ['أ', 'ب', 'ج', 'د'];
 
-    function startQuiz(filterType, filterValue) {
-        if (filterType === 'all') {
-            currentQuestions = [...questionsBank];
-        } else if (filterType === 'year') {
-            currentQuestions = questionsBank.filter(q => q.year === filterValue);
-        } else if (filterType === 'subject') {
-            currentQuestions = questionsBank.filter(q => q.subject === filterValue);
+    function shuffleArray(array) {
+        const arr = array.map((item, idx) => ({ text: item, isCorrect: idx === 0 }));
+        for (let i = arr.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [arr[i], arr[j]] = [arr[j], arr[i]];
         }
+        return arr;
+    }
 
-        if (currentQuestions.length === 0) {
-            alert("لا توجد أسئلة مضافة في هذا القسم حالياً.");
+    function renderQuestions() {
+        const container = document.getElementById('questions-container');
+        container.innerHTML = '';
+        score = 0;
+        answered = 0;
+        updateStats();
+
+        const filtered = currentFilter === 'all'
+            ? questionsBank
+            : questionsBank.filter(q => q.subject === currentFilter);
+
+        document.getElementById('total-count').textContent = filtered.length;
+
+        if (filtered.length === 0) {
+            container.innerHTML = '<div class="question-card" style="text-align:center; color:var(--text-muted);">جاري إضافة أسئلة هذا المقرر قريباً...</div>';
             return;
         }
 
-        currentIndex = 0;
-        score = 0;
-        secondsElapsed = 0;
+        filtered.forEach((q, qIndex) => {
+            const card = document.createElement('div');
+            card.className = 'question-card';
 
-        document.getElementById('home-screen').style.display = 'none';
-        document.getElementById('result-screen').style.display = 'none';
-        document.getElementById('quiz-screen').style.display = 'block';
+            const shuffledOptions = shuffleArray(q.options);
 
-        startTimer();
-        renderQuestion();
-    }
+            let optionsHTML = '';
+            shuffledOptions.forEach((opt, optIdx) => {
+                optionsHTML += `
+                    <button class="option-btn" data-correct="${opt.isCorrect}" onclick="checkAnswer(this, ${qIndex})">
+                        <span class="option-letter">${letters[optIdx]}</span>
+                        <span>${opt.text}</span>
+                    </button>
+                `;
+            });
 
-    function renderQuestion() {
-        const q = currentQuestions[currentIndex];
-        document.getElementById('progress-text').innerText = `السؤال ${currentIndex + 1} من ${currentQuestions.length}`;
-        document.getElementById('q-subject').innerText = `📚 ${q.subject}`;
-        document.getElementById('q-year').innerText = `📅 ورد في تحصيلي ${q.year} هـ`;
-        document.getElementById('question-text').innerText = q.question;
-
-        const optionsContainer = document.getElementById('options-container');
-        optionsContainer.innerHTML = '';
-
-        q.options.forEach((opt, idx) => {
-            const btn = document.createElement('button');
-            btn.className = 'option-btn';
-            btn.innerHTML = `<span class="option-letter">${letters[idx]}</span> <span>${opt}</span>`;
-            btn.onclick = () => selectAnswer(idx, btn);
-            optionsContainer.appendChild(btn);
+            card.innerHTML = `
+                <div class="q-meta">
+                    <span class="badge badge-subject">${q.subject}</span>
+                    <span class="badge badge-year">تجميعات ${q.year}</span>
+                </div>
+                <div class="q-text">${qIndex + 1}. ${q.question}</div>
+                <div class="options-grid" id="options-${qIndex}">
+                    ${optionsHTML}
+                </div>
+                <div class="explanation-box" id="exp-${qIndex}">
+                    <strong>التوضيح العلمي:</strong> ${q.explanation}
+                </div>
+            `;
+            container.appendChild(card);
         });
-
-        document.getElementById('explanation-box').style.display = 'none';
-        document.getElementById('next-btn').style.display = 'none';
     }
 
-    function selectAnswer(selectedIdx, selectedBtn) {
-        const q = currentQuestions[currentIndex];
-        const allButtons = document.querySelectorAll('.option-btn');
+    function checkAnswer(selectedBtn, qIndex) {
+        const grid = document.getElementById(`options-${qIndex}`);
+        const buttons = grid.querySelectorAll('.option-btn');
+        const isCorrect = selectedBtn.getAttribute('data-correct') === 'true';
 
-        allButtons.forEach(btn => btn.disabled = true);
-
-        if (selectedIdx === q.correctIndex) {
-            selectedBtn.classList.add('correct');
+        answered++;
+        if (isCorrect) {
             score++;
+            selectedBtn.classList.add('correct');
         } else {
             selectedBtn.classList.add('wrong');
-            allButtons[q.correctIndex].classList.add('correct');
+            buttons.forEach(btn => {
+                if (btn.getAttribute('data-correct') === 'true') {
+                    btn.classList.add('correct');
+                }
+            });
         }
 
-        document.getElementById('explanation-text').innerText = q.explanation;
-        document.getElementById('explanation-box').style.display = 'block';
-
-        const nextBtn = document.getElementById('next-btn');
-        nextBtn.style.display = 'inline-block';
-        nextBtn.innerText = (currentIndex === currentQuestions.length - 1) ? "عرض النتيجة النهائية 🏁" : "السؤال التالي ⬅";
+        buttons.forEach(btn => btn.disabled = true);
+        document.getElementById(`exp-${qIndex}`).classList.add('show');
+        updateStats();
     }
 
-    function nextQuestion() {
-        currentIndex++;
-        if (currentIndex < currentQuestions.length) {
-            renderQuestion();
-        } else {
-            showResult();
-        }
+    function updateStats() {
+        document.getElementById('score').textContent = score;
+        document.getElementById('answered').textContent = answered;
     }
 
-    function showResult() {
-        clearInterval(timerInterval);
-        document.getElementById('quiz-screen').style.display = 'none';
-        document.getElementById('result-screen').style.display = 'block';
-
-        const total = currentQuestions.length;
-        const percent = Math.round((score / total) * 100);
-
-        document.getElementById('result-percent').innerText = `${percent}%`;
-        document.getElementById('result-fraction').innerText = `${score} / ${total}`;
-        document.getElementById('stat-correct').innerText = score;
-        document.getElementById('stat-wrong').innerText = total - score;
-        document.getElementById('stat-time').innerText = formatTime(secondsElapsed);
-
-        let msg = "أداء رائع ومتميز! استمر على هذا المستوى.";
-        if (percent < 50) msg = "تحتاج إلى مزيد من المراجعة، راجع الشروحات وحاول مجدداً.";
-        else if (percent < 85) msg = "مستوى جيد جداً! قليل من التركيز وتصل للدرجة الكاملة.";
-
-        document.getElementById('result-message').innerText = msg;
+    function filterQuestions(subject, btnElement) {
+        currentFilter = subject;
+        document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+        btnElement.classList.add('active');
+        renderQuestions();
     }
 
-    function startTimer() {
-        clearInterval(timerInterval);
-        document.getElementById('timer').innerText = "00:00";
-        timerInterval = setInterval(() => {
-            secondsElapsed++;
-            document.getElementById('timer').innerText = formatTime(secondsElapsed);
-        }, 1000);
+    function resetQuiz() {
+        renderQuestions();
     }
 
-    function formatTime(secs) {
-        const mins = Math.floor(secs / 60).toString().padStart(2, '0');
-        const remSecs = (secs % 60).toString().padStart(2, '0');
-        return `${mins}:${remSecs}`;
-    }
-
-    function goHome() {
-        clearInterval(timerInterval);
-        document.getElementById('quiz-screen').style.display = 'none';
-        document.getElementById('result-screen').style.display = 'none';
-        document.getElementById('home-screen').style.display = 'block';
-    }
+    renderQuestions();
 </script>
 
 </body>
