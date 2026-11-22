@@ -499,6 +499,8 @@
 
                 <button onclick="generateExamLink()" style="width:100%; background:#0f766e; color:#fff; border:none; padding:12px; border-radius:10px; font-weight:bold; cursor:pointer; font-family:inherit; font-size:1rem;">
                     🔗 توليد رابط الاختبار لنسخه وإرساله للطلاب
+                                        🔗 توليد رابط الاختبار لنسخه وإرساله للطلاب
+                </button>
                                 <div id="generated-link-box" style="display:none; margin-top:15px; background:#f0fdf4; border:1px solid #86efac; padding:12px; border-radius:8px;">
                     <div style="font-weight:bold; color:#15803d; margin-bottom:8px;">✅ تم إنشاء الرابط ونسخه! أرسله لطلابك:</div>
                     <input id="final-exam-url" type="text" readonly style="width:100%; padding:8px; border:1px solid #cbd5e1; border-radius:6px; direction:ltr; margin-bottom:10px;">
