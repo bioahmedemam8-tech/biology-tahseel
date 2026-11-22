@@ -1,16 +1,22 @@
-// نظام الاختبارات الذاتية ولوحة المعلم - منصة أ. أحمد إمام
+// نظام الاختبارات الذاتية ولوحة المعلم المتكامل - منصة أ. أحمد إمام
 (function() {
+    // ⚙️ إعدادات المعلم (يمكنك تعديل الرمز السري ورابط الجدول هنا)
+    const TEACHER_PIN = "2026";
     const GOOGLE_SHEET_URL = "https://script.google.com/macros/s/AKfycbwn0rjUKvXuow5P1D1TmZT7fUKX32BGXR1H1EInH9F0W81HA3zF980NqLHD71Jk5VaRSA/exec";
+    const GOOGLE_DRIVE_SHEET_SEARCH = "https://docs.google.com/spreadsheets/u/0/";
 
     let examQuestions = [];
     let currentExamIndex = 0;
     let userAnswers = [];
     let examTimer = null;
     let timeRemaining = 0;
+    let isUntimedExam = false;
     let studentInfo = { name: "", school: "" };
     let activeExamTitle = "اختبار تحصيلي ذاتي";
     let isTeacherExam = false;
     let selectedForExam = new Set();
+    let selfSelectedLessons = new Set();
+    let lastWrongQuestions = [];
 
     const urlParams = new URLSearchParams(window.location.search);
     const sharedExamData = urlParams.get('exam');
@@ -71,7 +77,7 @@
                 👥 عدد الاختبارات المُنجزة: <strong id="exam-counter-val">${savedCount}</strong>
             </span>
             <button onclick="openSelfExamSetup()" style="background:#f59e0b; color:#fff; border:none; padding:8px 18px; border-radius:20px; font-weight:bold; cursor:pointer; font-family:inherit; box-shadow:0 2px 6px rgba(0,0,0,0.2);">
-                📝 اختبر نفسك (اختبار بمؤقت)
+                📝 اختبر نفسك (اختبار ذاتي)
             </button>
             <button onclick="openTeacherPanel()" style="background:#1e293b; color:#fff; border:1px solid rgba(255,255,255,0.3); padding:8px 16px; border-radius:20px; font-weight:bold; cursor:pointer; font-family:inherit;">
                 🔐 لوحة المعلم (إنشاء اختبار)
@@ -90,7 +96,7 @@
                 const decoded = JSON.parse(decodeURIComponent(escape(atob(sharedExamData))));
                 isTeacherExam = true;
                 activeExamTitle = decoded.t || "اختبار مقرر الأحياء";
-                const mins = decoded.m || 15;
+                const mins = decoded.m !== undefined ? decoded.m : 15;
                 const indices = decoded.q || [];
                 setTimeout(() => {
                     examQuestions = indices.map(i => questionsBank[i]).filter(Boolean);
@@ -106,37 +112,62 @@
 
     window.openSelfExamSetup = function() {
         isTeacherExam = false;
+        selfSelectedLessons.clear();
         const modal = document.getElementById('exam-overlay');
         modal.style.display = 'block';
+
+        const subjects = [...new Set(questionsBank.map(q => q.subject))];
+        const subjOptions = subjects.map(s => `<option value="${s}">${s}</option>`).join('');
+
         modal.innerHTML = `
-            <div style="max-width:550px; margin:30px auto; background:#fff; padding:25px; border-radius:16px; box-shadow:0 4px 20px rgba(0,0,0,0.08);">
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+            <div style="max-width:600px; margin:25px auto; background:#fff; padding:25px; border-radius:16px; box-shadow:0 4px 20px rgba(0,0,0,0.08);">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:18px;">
                     <h2 style="margin:0; color:#0f766e;">📝 إعداد اختبار تحصيلي ذاتي</h2>
                     <button onclick="closeExamOverlay()" style="background:#ef4444; color:#fff; border:none; padding:6px 12px; border-radius:8px; cursor:pointer; font-weight:bold;">إغلاق ✖</button>
                 </div>
                 <label style="display:block; font-weight:bold; margin-bottom:6px;">اسم الطالب الثلاثي (مطلوب):</label>
-                <input id="stu-name" type="text" placeholder="اكتب اسمك الثلاثي هنا..." style="width:100%; padding:10px; border:1px solid #cbd5e1; border-radius:8px; margin-bottom:14px; font-family:inherit;">
+                <input id="stu-name" type="text" placeholder="اكتب اسمك الثلاثي هنا..." style="width:100%; padding:10px; border:1px solid #cbd5e1; border-radius:8px; margin-bottom:12px; font-family:inherit;">
                 
-                <label style="display:block; font-weight:bold; margin-bottom:6px;">المدرسة أو المدينة (اختياري):</label>
-                <input id="stu-school" type="text" placeholder="مثال: ثانوية أضواء البيان / ينبع..." style="width:100%; padding:10px; border:1px solid #cbd5e1; border-radius:8px; margin-bottom:14px; font-family:inherit;">
+                <label style="display:block; font-weight:bold; margin-bottom:6px;">المدرسة أو الفصل (اختياري):</label>
+                <input id="stu-school" type="text" placeholder="مثال: ثانوية أضواء البيان..." style="width:100%; padding:10px; border:1px solid #cbd5e1; border-radius:8px; margin-bottom:12px; font-family:inherit;">
 
-                <label style="display:block; font-weight:bold; margin-bottom:6px;">اختر المقرر:</label>
-                <select id="self-subject" style="width:100%; padding:10px; border:1px solid #cbd5e1; border-radius:8px; margin-bottom:14px; font-family:inherit;">
+                <label style="display:block; font-weight:bold; margin-bottom:6px;">1️⃣ اختر المقرر:</label>
+                <select id="self-subject" onchange="onSelfSubjectChange()" style="width:100%; padding:10px; border:1px solid #cbd5e1; border-radius:8px; margin-bottom:12px; font-family:inherit;">
                     <option value="all">شامل جميع المقررات</option>
-                    <option value="أحياء 1">أحياء 1</option>
-                    <option value="أحياء 2-1">أحياء 2-1</option>
-                    <option value="أحياء 2-2">أحياء 2-2</option>
-                    <option value="أحياء 3">أحياء 3</option>
-                    <option value="علم البيئة">علم البيئة</option>
+                    ${subjOptions}
                 </select>
 
-                <label style="display:block; font-weight:bold; margin-bottom:6px;">عدد الأسئلة والمدة:</label>
-                <select id="self-count" style="width:100%; padding:10px; border:1px solid #cbd5e1; border-radius:8px; margin-bottom:20px; font-family:inherit;">
-                    <option value="10">10 أسئلة (10 دقائق)</option>
-                    <option value="20" selected>20 سؤالاً (20 دقيقة)</option>
-                    <option value="30">30 سؤالاً (30 دقيقة)</option>
-                    <option value="50">50 سؤالاً (50 دقيقة)</option>
-                </select>
+                <div id="self-lessons-wrapper" style="display:none; margin-bottom:14px; background:#f8fafc; border:1px solid #e2e8f0; padding:10px; border-radius:10px;">
+                    <label style="display:block; font-weight:bold; margin-bottom:6px; color:#0f766e; font-size:0.9rem;">2️⃣ حدد درساً أو أكثر (أو اتركها فارغة لاختبار شامل للمقرر):</label>
+                    <div id="self-lessons-box" style="display:flex; flex-wrap:wrap; gap:6px; max-height:130px; overflow-y:auto;"></div>
+                </div>
+
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:20px;">
+                    <div>
+                        <label style="display:block; font-weight:bold; margin-bottom:6px; font-size:0.9rem;">3️⃣ عدد الأسئلة (المتاح: <span id="self-avail-count">${questionsBank.length}</span>):</label>
+                        <select id="self-count" style="width:100%; padding:10px; border:1px solid #cbd5e1; border-radius:8px; font-family:inherit;">
+                            <option value="5">5 أسئلة</option>
+                            <option value="10" selected>10 أسئلة</option>
+                            <option value="15">15 سؤالاً</option>
+                            <option value="20">20 سؤالاً</option>
+                            <option value="30">30 سؤالاً</option>
+                            <option value="50">50 سؤالاً</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label style="display:block; font-weight:bold; margin-bottom:6px; font-size:0.9rem;">4️⃣ مدة الاختبار:</label>
+                        <select id="self-time" style="width:100%; padding:10px; border:1px solid #cbd5e1; border-radius:8px; font-family:inherit;">
+                            <option value="0">مفتوح (بدون مؤقت)</option>
+                            <option value="5">5 دقائق</option>
+                            <option value="10" selected>10 دقائق</option>
+                            <option value="15">15 دقيقة</option>
+                            <option value="20">20 دقيقة</option>
+                            <option value="30">30 دقيقة</option>
+                            <option value="45">45 دقيقة</option>
+                            <option value="60">60 دقيقة</option>
+                        </select>
+                    </div>
+                </div>
 
                 <button onclick="startSelfExam()" style="width:100%; background:#0f766e; color:#fff; border:none; padding:12px; border-radius:10px; font-size:1.05rem; font-weight:bold; cursor:pointer; font-family:inherit;">
                     🚀 ابدأ الاختبار الآن
@@ -145,13 +176,54 @@
         `;
     };
 
+    window.onSelfSubjectChange = function() {
+        const subj = document.getElementById('self-subject').value;
+        selfSelectedLessons.clear();
+        const wrapper = document.getElementById('self-lessons-wrapper');
+        const box = document.getElementById('self-lessons-box');
+
+        if (subj === 'all') {
+            wrapper.style.display = 'none';
+            document.getElementById('self-avail-count').textContent = questionsBank.length;
+            return;
+        }
+
+        const filtered = questionsBank.filter(q => q.subject === subj);
+        const lessons = [...new Set(filtered.map(q => q.lesson))];
+        wrapper.style.display = 'block';
+        box.innerHTML = lessons.map(lesson => `
+            <label style="display:inline-flex; align-items:center; gap:5px; background:#fff; padding:5px 10px; border-radius:20px; font-size:0.83rem; cursor:pointer; border:1px solid #cbd5e1;">
+                <input type="checkbox" value="${lesson}" onchange="toggleSelfLesson(this.value, this.checked)">
+                <span>${lesson}</span>
+            </label>
+        `).join('');
+
+        updateSelfAvailableCount();
+    };
+
+    window.toggleSelfLesson = function(lesson, checked) {
+        if (checked) selfSelectedLessons.add(lesson);
+        else selfSelectedLessons.delete(lesson);
+        updateSelfAvailableCount();
+    };
+
+    function updateSelfAvailableCount() {
+        const subj = document.getElementById('self-subject').value;
+        let pool = subj === 'all' ? questionsBank : questionsBank.filter(q => q.subject === subj);
+        if (selfSelectedLessons.size > 0) {
+            pool = pool.filter(q => selfSelectedLessons.has(q.lesson));
+        }
+        document.getElementById('self-avail-count').textContent = pool.length;
+    }
+
     function showStudentLoginScreen(mins) {
         const modal = document.getElementById('exam-overlay');
         modal.style.display = 'block';
+        const timeText = mins > 0 ? `<strong>${mins}</strong> دقيقة` : `<strong>مفتوح (بدون مؤقت)</strong>`;
         modal.innerHTML = `
             <div style="max-width:500px; margin:40px auto; background:#fff; padding:25px; border-radius:16px; box-shadow:0 4px 20px rgba(0,0,0,0.08); text-align:right;">
                 <h2 style="margin-top:0; color:#0f766e;">📋 ${activeExamTitle}</h2>
-                <p style="color:#475569;">عدد الأسئلة: <strong>${examQuestions.length}</strong> سؤال | المدة: <strong>${mins}</strong> دقيقة</p>
+                <p style="color:#475569;">عدد الأسئلة: <strong>${examQuestions.length}</strong> سؤال \vert{} المدة: ${timeText}</p>
                 <hr style="border:none; border-top:1px solid #e2e8f0; margin:15px 0;">
                 <label style="display:block; font-weight:bold; margin-bottom:6px;">اسم الطالب الثلاثي (مطلوب):</label>
                 <input id="stu-name" type="text" placeholder="اكتب اسمك الثلاثي..." style="width:100%; padding:10px; border:1px solid #cbd5e1; border-radius:8px; margin-bottom:14px; font-family:inherit;">
@@ -160,7 +232,7 @@
                 <input id="stu-school" type="text" placeholder="اكتب مدرستك أو فصلك..." style="width:100%; padding:10px; border:1px solid #cbd5e1; border-radius:8px; margin-bottom:20px; font-family:inherit;">
 
                 <button onclick="beginSharedExam(${mins})" style="width:100%; background:#0f766e; color:#fff; border:none; padding:12px; border-radius:10px; font-size:1.05rem; font-weight:bold; cursor:pointer; font-family:inherit;">
-                    ✅ دخول الاختبار وبدء الوقت
+                    ✅ دخول الاختبار والبدء
                 </button>
             </div>
         `;
@@ -173,40 +245,24 @@
         studentInfo.school = document.getElementById('stu-school').value.trim() || "غير محدد";
         const subj = document.getElementById('self-subject').value;
         const count = parseInt(document.getElementById('self-count').value, 10);
+        const chosenMins = parseInt(document.getElementById('self-time').value, 10);
 
         let pool = subj === 'all' ? [...questionsBank] : questionsBank.filter(q => q.subject === subj);
+        if (selfSelectedLessons.size > 0) {
+            pool = pool.filter(q => selfSelectedLessons.has(q.lesson));
+        }
+        if (pool.length === 0) { alert("لا توجد أسئلة متاحة في هذا الاختيار"); return; }
+
         pool.sort(() => Math.random() - 0.5);
         examQuestions = pool.slice(0, Math.min(count, pool.length));
-        activeExamTitle = subj === 'all' ? "اختبار تحصيلي شامل" : `اختبار مقرر ${subj}`;
-        launchExamEngine(count);
-    };
-
-    window.beginSharedExam = function(mins) {
-        const name = document.getElementById('stu-name').value.trim();
-        if (!name) { alert("يرجى كتابة اسمك الثلاثي أولاً"); return; }
-        studentInfo.name = name;
-        studentInfo.school = document.getElementById('stu-school').value.trim() || "غير محدد";
-        launchExamEngine(mins);
-    };
-
-    function launchExamEngine(minutes) {
-        currentExamIndex = 0;
-        userAnswers = new Array(examQuestions.length).fill(null);
-        timeRemaining = minutes * 60;
-        clearInterval(examTimer);
-        examTimer = setInterval(() => {
-            timeRemaining--;
-            const timerEl = document.getElementById('exam-timer-display');
-            if (timerEl) {
-                const m = Math.floor(timeRemaining / 60);
-                const s = timeRemaining % 60;
-                timerEl.textContent = `${m}:${s < 10 ? '0' : ''}${s}`;
-            }
-            if (timeRemaining <= 0) {
-                clearInterval(examTimer);
-                finishExam();
-            }
-        }, 1000);
+        const lessonsLabel = selfSelectedLessons.size > 0 ? ` (${Array.from(selfSelectedLessons).join('، ')})` : ''; activeExamTitle = subj === 'all' ? "اختبار تحصيلي شامل" : `اختبار ذاتي: ${subj}${lessonsLabel}`; launchExamEngine(chosenMins); };  window.beginSharedExam = function(mins) { const name = document.getElementById('stu-name').value.trim(); if (!name) { alert("يرجى كتابة اسمك الثلاثي أولاً"); return; } studentInfo.name = name; studentInfo.school = document.getElementById('stu-school').value.trim() \vert{}\vert{} "غير محدد"; launchExamEngine(mins); };  function launchExamEngine(minutes) { currentExamIndex = 0; userAnswers = new Array(examQuestions.length).fill(null); clearInterval(examTimer);  if (!minutes \vert{}\vert{} minutes <= 0) { isUntimedExam = true; timeRemaining = 0; } else { isUntimedExam = false; timeRemaining = minutes * 60; examTimer = setInterval(() => { timeRemaining--; const timerEl = document.getElementById('exam-timer-display'); if (timerEl) { const m = Math.floor(timeRemaining / 60); const s = timeRemaining \% 60; timerEl.textContent = `${m}:${s < 10 ? '0' : ''}${s}`;
+                }
+                if (timeRemaining <= 0) {
+                    clearInterval(examTimer);
+                    finishExam();
+                }
+            }, 1000);
+        }
         renderExamQuestion();
     }
 
@@ -215,6 +271,9 @@
         const modal = document.getElementById('exam-overlay');
         const m = Math.floor(timeRemaining / 60);
         const s = timeRemaining % 60;
+        const timerBadge = isUntimedExam
+            ? `<span style="background:#e0f2fe; color:#0369a1; padding:4px 12px; border-radius:8px; font-weight:bold;">⏱ وقت مفتوح</span>`
+            : `<span style="background:#fee2e2; color:#b91c1c; padding:4px 12px; border-radius:8px; font-weight:bold;">⏱ <span id="exam-timer-display">${m}:${s < 10 ? '0' : ''}${s}</span></span>`;
 
         let optionsHtml = q.options.map((opt, idx) => {
             const isSelected = userAnswers[currentExamIndex] === idx;
@@ -228,12 +287,11 @@
         modal.innerHTML = `
             <div style="max-width:700px; margin:20px auto; background:#fff; padding:25px; border-radius:16px; box-shadow:0 4px 20px rgba(0,0,0,0.08);">
                 <div style="display:flex; justify-content:space-between; align-items:center; background:#f1f5f9; padding:12px 16px; border-radius:10px; margin-bottom:20px;">
-                    <span>👤 <strong>${studentInfo.name}</strong></span>
-                    <span style="background:#fee2e2; color:#b91c1c; padding:4px 12px; border-radius:8px; font-weight:bold;">⏱ <span id="exam-timer-display">${m}:${s < 10 ? '0' : ''}${s}</span></span>
+                    <span>👤 <strong>${studentInfo.name}</strong></span>${timerBadge}
                     <span>سؤال <strong>${currentExamIndex + 1}</strong> من <strong>${examQuestions.length}</strong></span>
                 </div>
 
-                <div style="font-size:0.85rem; color:#0284c7; margin-bottom:8px; font-weight:bold;">${q.subject} - ${q.lesson}</div>
+                <div style="font-size:0.85rem; color:#0284c7; margin-bottom:8px; font-weight:bold;">${q.subject} -${q.lesson}</div>
                 <h3 style="margin-top:0; margin-bottom:20px; line-height:1.6;">${q.question}</h3>
                 <div>${optionsHtml}</div>
 
@@ -258,7 +316,16 @@
     window.finishExam = function() {
         clearInterval(examTimer);
         let score = 0;
-        examQuestions.forEach((q, i) => { if (userAnswers[i] === q.correctIndex) score++; });
+        lastWrongQuestions = [];
+
+        examQuestions.forEach((q, i) => {
+            if (userAnswers[i] === q.correctIndex) {
+                score++;
+            } else {
+                lastWrongQuestions.push(q);
+            }
+        });
+
         const total = examQuestions.length;
         const percent = Math.round((score / total) * 100);
 
@@ -272,13 +339,21 @@
             const isCorrect = uAns === q.correctIndex;
             return `
                 <div style="border:1px solid ${isCorrect ? '#86efac' : '#fca5a5'}; background:${isCorrect ? '#f0fdf4' : '#fef2f2'}; padding:15px; border-radius:10px; margin-bottom:12px;">
-                    <div style="font-weight:bold; margin-bottom:6px;">${i + 1}. ${q.question}</div>
+                    <div style="font-weight:bold; margin-bottom:6px;">${i + 1}.${q.question}</div>
                     <div>إجابتك: <strong>${uAns !== null ? q.options[uAns] : 'لم تُجب'}</strong> ${isCorrect ? '✅' : '❌'}</div>
                     ${!isCorrect ? `<div style="color:#15803d; margin-top:4px;">الإجابة الصحيحة: <strong>${q.options[q.correctIndex]}</strong></div>` : ''}
                     <div style="margin-top:8px; font-size:0.9rem; color:#334155; background:#fff; padding:8px; border-radius:6px;">💡 <strong>الشرح:</strong> ${q.explanation}</div>
                 </div>
             `;
         }).join('');
+
+        const certBtn = percent >= 85
+            ? `<button onclick="openCertificateModal(${score}, ${total},${percent})" style="background:#eab308; color:#1e293b; border:none; padding:10px 20px; border-radius:8px; font-weight:bold; cursor:pointer; font-family:inherit;">🏅 عرض وطباعة شهادة التفوق</button>`
+            : '';
+
+        const retryWrongBtn = lastWrongQuestions.length > 0
+            ? `<button onclick="retryWrongQuestions()" style="background:#dc2626; color:#fff; border:none; padding:10px 20px; border-radius:8px; font-weight:bold; cursor:pointer; font-family:inherit;">🔁 تدرب على أخطائك فقط (${lastWrongQuestions.length})</button>`
+            : '';
 
         const modal = document.getElementById('exam-overlay');
         modal.innerHTML = `
@@ -293,7 +368,8 @@
                     </div>
                 </div>
 
-                <div style="text-align:center; margin-bottom:20px;">
+                <div style="display:flex; flex-wrap:wrap; justify-content:center; gap:10px; margin-bottom:20px;">
+                    ${certBtn}${retryWrongBtn}
                     <button onclick="closeExamOverlay()" style="background:#1e293b; color:#fff; border:none; padding:10px 24px; border-radius:8px; font-weight:bold; cursor:pointer; font-family:inherit;">العودة لبنك الأسئلة</button>
                 </div>
 
@@ -312,18 +388,69 @@
         });
     };
 
+    window.retryWrongQuestions = function() {
+        if (lastWrongQuestions.length === 0) return;
+        examQuestions = [...lastWrongQuestions];
+        activeExamTitle = "مراجعة الأخطاء: " + activeExamTitle;
+        launchExamEngine(0);
+    };
+
+    window.openCertificateModal = function(score, total, percent) {
+        const today = new Date().toLocaleDateString('ar-SA');
+        const certWindow = window.open('', '_blank', 'width=850,height=620');
+        certWindow.document.write(`
+            <!DOCTYPE html>
+            <html lang="ar" dir="rtl">
+            <head>
+                <meta charset="UTF-8">
+                <title>شهادة تفوق - ${studentInfo.name}</title>
+                <style>
+                    body { font-family: 'Segoe UI', Tahoma, sans-serif; background:#f1f5f9; display:flex; justify-content:center; align-items:center; min-height:100vh; margin:0; }
+                    .cert { width:760px; background:#fff; border:12px double #0f766e; padding:40px; text-align:center; box-shadow:0 10px 30px rgba(0,0,0,0.1); position:relative; }
+                    h1 { color:#0f766e; font-size:2.2rem; margin-bottom:10px; }
+                    .sub { color:#64748b; font-size:1.1rem; margin-bottom:25px; }
+                    .name { font-size:1.9rem; font-weight:bold; color:#1e293b; border-bottom:2px solid #eab308; display:inline-block; padding:5px 30px; margin:15px 0; }
+                    .details { font-size:1.15rem; color:#334155; line-height:1.9; margin:20px 0; }
+                    .footer { display:flex; justify-content:space-between; margin-top:40px; padding:0 30px; font-weight:bold; color:#0f766e; }
+                    @media print { body { background:#fff; } .no-print { display:none; } }
+                </style>
+            </head>
+            <body>
+                <div class="cert">
+                    <div style="font-size:3rem;">🏅</div>
+                    <h1>شهادة شكر وتفوق</h1>
+                    <div class="sub">منصة أ. أحمد إمام التعليمية للأحياء والتحصيلي</div>
+                    <p style="font-size:1.1rem;">تُمنح هذه الشهادة بكل فخر واعتزاز للطالب المتميز:</p>
+                    <div class="name">${studentInfo.name}</div>
+                    <div class="details">
+                        وذلك لتفوقه واجتيازه <strong>(${activeExamTitle})</strong><br>
+                        بدرجة <strong>${score} من ${total}</strong> وبنسبة مئوية قدرها <strong>${percent}%</strong>
+                    </div>
+                    <div class="footer">
+                        <div>التاريخ: ${today}</div>
+                        <div>معلم المادة: أ. أحمد إمام</div>
+                    </div>
+                    <button class="no-print" onclick="window.print()" style="margin-top:25px; background:#0f766e; color:#fff; border:none; padding:10px 25px; border-radius:8px; font-size:1rem; cursor:pointer;">🖨️ طباعة أو حفظ الشهادة PDF</button>
+                </div>
+            </body>
+            </html>
+        `);
+        certWindow.document.close();
+    };
+
     window.closeExamOverlay = function() {
         clearInterval(examTimer);
         document.getElementById('exam-overlay').style.display = 'none';
     };
 
-    // لوحة المعلم المطوّرة مع تصفية المقرر واختيار درس أو عدة دروس
+    // لوحة المعلم المطوّرة
     let teacherSelectedLessons = new Set();
     let teacherCurrentFilteredIndices = [];
+    let lastGeneratedUrl = "";
 
     window.openTeacherPanel = function() {
-        const pass = prompt("أدخل رمز المعلم (الافتراضي: 2026):");
-        if (pass !== "2026") { alert("رمز غير صحيح"); return; }
+        const pass = prompt("أدخل رمز المعلم:");
+        if (pass !== TEACHER_PIN) { alert("رمز غير صحيح"); return; }
 
         selectedForExam.clear();
         teacherSelectedLessons.clear();
@@ -335,14 +462,17 @@
 
         modal.innerHTML = `
             <div style="max-width:800px; margin:20px auto; background:#fff; padding:25px; border-radius:16px; box-shadow:0 4px 20px rgba(0,0,0,0.08);">
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+                <div style="display:flex; flex-wrap:wrap; justify-content:space-between; align-items:center; gap:10px; margin-bottom:15px;">
                     <h2 style="margin:0; color:#1e293b;">🔐 لوحة المعلم - إنشاء اختبار مخصص</h2>
-                    <button onclick="closeExamOverlay()" style="background:#ef4444; color:#fff; border:none; padding:6px 12px; border-radius:8px; cursor:pointer; font-weight:bold;">إغلاق ✖</button>
+                    <div style="display:flex; gap:8px;">
+                        <a href="${GOOGLE_DRIVE_SHEET_SEARCH}" target="_blank" style="background:#16a34a; color:#fff; text-decoration:none; padding:6px 12px; border-radius:8px; font-weight:bold; font-size:0.88rem;">📊 جدول نتائج الطلاب</a>
+                        <button onclick="closeExamOverlay()" style="background:#ef4444; color:#fff; border:none; padding:6px 12px; border-radius:8px; cursor:pointer; font-weight:bold;">إغلاق ✖</button>
+                    </div>
                 </div>
 
                 <div style="display:grid; grid-template-columns:2fr 1fr; gap:10px; margin-bottom:14px;">
                     <input id="t-exam-title" type="text" placeholder="عنوان الاختبار (مثلاً: اختبار درسي الطلائعيات والفطريات)" style="padding:10px; border:1px solid #cbd5e1; border-radius:8px; font-family:inherit;">
-                    <input id="t-exam-mins" type="number" value="15" min="1" max="120" placeholder="المدة بالدقائق" style="padding:10px; border:1px solid #cbd5e1; border-radius:8px; font-family:inherit;">
+                    <input id="t-exam-mins" type="number" value="15" min="0" max="120" placeholder="المدة بالدقائق (0 = مفتوح)" style="padding:10px; border:1px solid #cbd5e1; border-radius:8px; font-family:inherit;">
                 </div>
 
                 <div style="background:#f8fafc; border:1px solid #e2e8f0; padding:12px; border-radius:10px; margin-bottom:14px;">
@@ -371,109 +501,5 @@
                     🔗 توليد رابط الاختبار لنسخه وإرساله للطلاب
                 </button>
                 <div id="generated-link-box" style="display:none; margin-top:15px; background:#f0fdf4; border:1px solid #86efac; padding:12px; border-radius:8px;">
-                    <div style="font-weight:bold; color:#15803d; margin-bottom:6px;">✅ تم إنشاء الرابط ونسخه! أرسله لطلابك:</div>
-                    <input id="final-exam-url" type="text" readonly style="width:100%; padding:8px; border:1px solid #cbd5e1; border-radius:6px; direction:ltr;">
-                </div>
-            </div>
-        `;
-
-        onTeacherSubjectChange();
-    };
-
-    window.onTeacherSubjectChange = function() {
-        const subj = document.getElementById('t-subject-filter').value;
-        teacherSelectedLessons.clear();
-        const filteredBySubj = subj === 'all' ? questionsBank : questionsBank.filter(q => q.subject === subj);
-        const lessons = [...new Set(filteredBySubj.map(q => q.lesson))];
-
-        const lessonsBox = document.getElementById('t-lessons-box');
-        lessonsBox.innerHTML = lessons.map(lesson => `
-            <label style="display:inline-flex; align-items:center; gap:5px; background:#f1f5f9; padding:5px 10px; border-radius:20px; font-size:0.85rem; cursor:pointer; border:1px solid #cbd5e1;">
-                <input type="checkbox" value="${lesson}" onchange="toggleTeacherLesson(this.value, this.checked)">
-                <span>${lesson}</span>
-            </label>
-        `).join('');
-
-        renderTeacherFilteredQuestions();
-    };
-
-    window.toggleTeacherLesson = function(lesson, checked) {
-        if (checked) teacherSelectedLessons.add(lesson);
-        else teacherSelectedLessons.delete(lesson);
-        renderTeacherFilteredQuestions();
-    };
-
-    function renderTeacherFilteredQuestions() {
-        const subj = document.getElementById('t-subject-filter').value;
-        teacherCurrentFilteredIndices = [];
-
-        questionsBank.forEach((q, idx) => {
-            const matchSubj = (subj === 'all' || q.subject === subj);
-            const matchLesson = (teacherSelectedLessons.size === 0 || teacherSelectedLessons.has(q.lesson));
-            if (matchSubj && matchLesson) {
-                teacherCurrentFilteredIndices.push(idx);
-            }
-        });
-
-        document.getElementById('filtered-q-total').textContent = teacherCurrentFilteredIndices.length;
-        const listEl = document.getElementById('t-questions-list');
-
-        if (teacherCurrentFilteredIndices.length === 0) {
-            listEl.innerHTML = `<div style="text-align:center; color:#64748b; padding:20px;">لا توجد أسئلة مطابقة لهذا الاختيار.</div>`;
-            return;
-        }
-
-        listEl.innerHTML = teacherCurrentFilteredIndices.map(idx => {
-            const q = questionsBank[idx];
-            const isChecked = selectedForExam.has(idx) ? 'checked' : '';
-            return `
-                <label style="display:block; padding:8px; border-bottom:1px solid #f1f5f9; cursor:pointer;">
-                    <input type="checkbox" ${isChecked} onchange="toggleQSelect(${idx}, this.checked)">
-                    <span style="font-size:0.8rem; color:#0284c7; font-weight:bold;">[${q.subject} - ${q.lesson}]</span> ${q.question}
-                </label>
-            `;
-        }).join('');
-    }
-
-    window.selectAllFilteredQ = function(selectAll) {
-        teacherCurrentFilteredIndices.forEach(idx => {
-            if (selectAll) selectedForExam.add(idx);
-            else selectedForExam.delete(idx);
-        });
-        document.getElementById('sel-q-count').textContent = selectedForExam.size;
-        renderTeacherFilteredQuestions();
-    };
-
-    window.selectRandomFilteredQ = function() {
-        if (teacherCurrentFilteredIndices.length === 0) return;
-        const countStr = prompt(`كم سؤالاً عشوائياً تريد اختياره من هذه الدروس؟ (المتاح: ${teacherCurrentFilteredIndices.length})`, "10");
-        const num = parseInt(countStr, 10);
-        if (!num || num <= 0) return;
-
-        const shuffled = [...teacherCurrentFilteredIndices].sort(() => Math.random() - 0.5);
-        shuffled.slice(0, Math.min(num, shuffled.length)).forEach(idx => selectedForExam.add(idx));
-        document.getElementById('sel-q-count').textContent = selectedForExam.size;
-        renderTeacherFilteredQuestions();
-    };
-
-    window.toggleQSelect = function(idx, checked) {
-        if (checked) selectedForExam.add(idx); else selectedForExam.delete(idx);
-        document.getElementById('sel-q-count').textContent = selectedForExam.size;
-    };
-
-    window.generateExamLink = function() {
-        if (selectedForExam.size === 0) { alert("اختر سؤالاً واحداً على الأقل"); return; }
-        const title = document.getElementById('t-exam-title').value.trim() || "اختبار تحصيلي - أ. أحمد إمام";
-        const mins = parseInt(document.getElementById('t-exam-mins').value, 10) || 15;
-        const payload = { t: title, m: mins, q: Array.from(selectedForExam) };
-        const encoded = btoa(unescape(encodeURIComponent(JSON.stringify(payload))));
-        const baseUrl = window.location.origin + window.location.pathname;
-        const fullUrl = `${baseUrl}?exam=${encoded}`;
-
-        document.getElementById('generated-link-box').style.display = 'block';
-        const urlInput = document.getElementById('final-exam-url');
-        urlInput.value = fullUrl;
-        urlInput.select();
-        navigator.clipboard?.writeText(fullUrl);
-    };
-})();
+                    <div style="font-weight:bold; color:#15803d; margin-bottom:8px;">✅ تم إنشاء الرابط ونسخه! أرسله لطلابك:</div>
+                    <input id="final-exam
