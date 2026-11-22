@@ -499,7 +499,124 @@
 
                 <button onclick="generateExamLink()" style="width:100%; background:#0f766e; color:#fff; border:none; padding:12px; border-radius:10px; font-weight:bold; cursor:pointer; font-family:inherit; font-size:1rem;">
                     🔗 توليد رابط الاختبار لنسخه وإرساله للطلاب
-                </button>
-                <div id="generated-link-box" style="display:none; margin-top:15px; background:#f0fdf4; border:1px solid #86efac; padding:12px; border-radius:8px;">
+                                <div id="generated-link-box" style="display:none; margin-top:15px; background:#f0fdf4; border:1px solid #86efac; padding:12px; border-radius:8px;">
                     <div style="font-weight:bold; color:#15803d; margin-bottom:8px;">✅ تم إنشاء الرابط ونسخه! أرسله لطلابك:</div>
-                    <input id="final-exam
+                    <input id="final-exam-url" type="text" readonly style="width:100%; padding:8px; border:1px solid #cbd5e1; border-radius:6px; direction:ltr; margin-bottom:10px;">
+                    <button type="button" onclick="shareExamWhatsApp()" style="width:100%; background:#25D366; color:#fff; border:none; padding:10px; border-radius:8px; font-weight:bold; cursor:pointer; font-family:inherit; font-size:0.95rem;">
+                        📲 إرسال الاختبار مباشرة عبر واتساب
+                    </button>
+                </div>
+            </div>
+        `;
+
+        onTeacherSubjectChange();
+    };
+
+    window.onTeacherSubjectChange = function() {
+        const subj = document.getElementById('t-subject-filter').value;
+        teacherSelectedLessons.clear();
+        const filteredBySubj = subj === 'all' ? questionsBank : questionsBank.filter(q => q.subject === subj);
+        const lessons = [...new Set(filteredBySubj.map(q => q.lesson))];
+
+        const lessonsBox = document.getElementById('t-lessons-box');
+        lessonsBox.innerHTML = lessons.map(lesson => `
+            <label style="display:inline-flex; align-items:center; gap:5px; background:#f1f5f9; padding:5px 10px; border-radius:20px; font-size:0.85rem; cursor:pointer; border:1px solid #cbd5e1;">
+                <input type="checkbox" value="${lesson}" onchange="toggleTeacherLesson(this.value, this.checked)">
+                <span>${lesson}</span>
+            </label>
+        `).join('');
+
+        renderTeacherFilteredQuestions();
+    };
+
+    window.toggleTeacherLesson = function(lesson, checked) {
+        if (checked) teacherSelectedLessons.add(lesson);
+        else teacherSelectedLessons.delete(lesson);
+        renderTeacherFilteredQuestions();
+    };
+
+    function renderTeacherFilteredQuestions() {
+        const subj = document.getElementById('t-subject-filter').value;
+        teacherCurrentFilteredIndices = [];
+
+        questionsBank.forEach((q, idx) => {
+            const matchSubj = (subj === 'all' || q.subject === subj);
+            const matchLesson = (teacherSelectedLessons.size === 0 || teacherSelectedLessons.has(q.lesson));
+            if (matchSubj && matchLesson) {
+                teacherCurrentFilteredIndices.push(idx);
+            }
+        });
+
+        document.getElementById('filtered-q-total').textContent = teacherCurrentFilteredIndices.length;
+        const listEl = document.getElementById('t-questions-list');
+
+        if (teacherCurrentFilteredIndices.length === 0) {
+            listEl.innerHTML = `<div style="text-align:center; color:#64748b; padding:20px;">لا توجد أسئلة مطابقة لهذا الاختيار.</div>`;
+            return;
+        }
+
+        listEl.innerHTML = teacherCurrentFilteredIndices.map(idx => {
+            const q = questionsBank[idx];
+            const isChecked = selectedForExam.has(idx) ? 'checked' : '';
+            return `
+                <label style="display:block; padding:8px; border-bottom:1px solid #f1f5f9; cursor:pointer;">
+                    <input type="checkbox" ${isChecked} onchange="toggleQSelect(${idx}, this.checked)">
+                    <span style="font-size:0.8rem; color:#0284c7; font-weight:bold;">[${q.subject} - ${q.lesson}]</span> ${q.question}
+                </label>
+            `;
+        }).join('');
+    }
+
+    window.selectAllFilteredQ = function(selectAll) {
+        teacherCurrentFilteredIndices.forEach(idx => {
+            if (selectAll) selectedForExam.add(idx);
+            else selectedForExam.delete(idx);
+        });
+        document.getElementById('sel-q-count').textContent = selectedForExam.size;
+        renderTeacherFilteredQuestions();
+    };
+
+    window.selectRandomFilteredQ = function() {
+        if (teacherCurrentFilteredIndices.length === 0) return;
+        const countStr = prompt(`كم سؤالاً عشوائياً تريد اختياره من هذه الدروس؟ (المتاح: ${teacherCurrentFilteredIndices.length})`, "10");
+        const num = parseInt(countStr, 10);
+        if (!num || num <= 0) return;
+
+        const shuffled = [...teacherCurrentFilteredIndices].sort(() => Math.random() - 0.5);
+        shuffled.slice(0, Math.min(num, shuffled.length)).forEach(idx => selectedForExam.add(idx));
+        document.getElementById('sel-q-count').textContent = selectedForExam.size;
+        renderTeacherFilteredQuestions();
+    };
+
+    window.toggleQSelect = function(idx, checked) {
+        if (checked) selectedForExam.add(idx); else selectedForExam.delete(idx);
+        document.getElementById('sel-q-count').textContent = selectedForExam.size;
+    };
+
+    window.generateExamLink = function() {
+        if (selectedForExam.size === 0) { alert("اختر سؤالاً واحداً على الأقل"); return; }
+        const title = document.getElementById('t-exam-title').value.trim() || "اختبار تحصيلي - أ. أحمد إمام";
+        const minsVal = parseInt(document.getElementById('t-exam-mins').value, 10);
+        const mins = isNaN(minsVal) ? 15 : minsVal;
+        const payload = { t: title, m: mins, q: Array.from(selectedForExam) };
+        const encoded = btoa(unescape(encodeURIComponent(JSON.stringify(payload))));
+        const baseUrl = window.location.origin + window.location.pathname;
+        lastGeneratedUrl = `${baseUrl}?exam=${encoded}`;
+
+        document.getElementById('generated-link-box').style.display = 'block';
+        const urlInput = document.getElementById('final-exam-url');
+        urlInput.value = lastGeneratedUrl;
+        urlInput.select();
+        navigator.clipboard?.writeText(lastGeneratedUrl);
+    };
+
+    window.shareExamWhatsApp = function() {
+        if (!lastGeneratedUrl) return;
+        const title = document.getElementById('t-exam-title').value.trim() || "اختبار تحصيلي - أ. أحمد إمام";
+        const minsVal = parseInt(document.getElementById('t-exam-mins').value, 10);
+        const timeInfo = (!isNaN(minsVal) && minsVal > 0) ? `${minsVal} دقيقة` : "مفتوح";
+        const msg = `📋 *${title}*\n👨‍🏫 إعداد: أ. أحمد إمام\n❓ عدد الأسئلة: ${selectedForExam.size} سؤال\n⏱ المدة: ${timeInfo}\n\n🔗 رابط الدخول للاختبار:\n${lastGeneratedUrl}`;
+        window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank');
+    };
+})();
+
