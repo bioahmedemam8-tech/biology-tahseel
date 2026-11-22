@@ -317,47 +317,143 @@
         document.getElementById('exam-overlay').style.display = 'none';
     };
 
+    // لوحة المعلم المطوّرة مع تصفية المقرر واختيار درس أو عدة دروس
+    let teacherSelectedLessons = new Set();
+    let teacherCurrentFilteredIndices = [];
+
     window.openTeacherPanel = function() {
         const pass = prompt("أدخل رمز المعلم (الافتراضي: 2026):");
         if (pass !== "2026") { alert("رمز غير صحيح"); return; }
 
         selectedForExam.clear();
+        teacherSelectedLessons.clear();
         const modal = document.getElementById('exam-overlay');
         modal.style.display = 'block';
 
-        let listHtml = questionsBank.map((q, idx) => `
-            <label style="display:block; padding:8px; border-bottom:1px solid #f1f5f9; cursor:pointer;">
-                <input type="checkbox" onchange="toggleQSelect(${idx}, this.checked)">
-                <span style="font-size:0.8rem; color:#0284c7; font-weight:bold;">[${q.subject}]</span> ${q.question}
-            </label>
-        `).join('');
+        const subjects = [...new Set(questionsBank.map(q => q.subject))];
+        const subjOptions = subjects.map(s => `<option value="${s}">${s}</option>`).join('');
 
         modal.innerHTML = `
-            <div style="max-width:750px; margin:20px auto; background:#fff; padding:25px; border-radius:16px; box-shadow:0 4px 20px rgba(0,0,0,0.08);">
+            <div style="max-width:800px; margin:20px auto; background:#fff; padding:25px; border-radius:16px; box-shadow:0 4px 20px rgba(0,0,0,0.08);">
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
-                    <h2 style="margin:0; color:#1e293b;">🔐 لوحة المعلم - إنشاء اختبار للطلاب</h2>
-                    <button onclick="closeExamOverlay()" style="background:#ef4444; color:#fff; border:none; padding:6px 12px; border-radius:8px; cursor:pointer;">إغلاق ✖</button>
+                    <h2 style="margin:0; color:#1e293b;">🔐 لوحة المعلم - إنشاء اختبار مخصص</h2>
+                    <button onclick="closeExamOverlay()" style="background:#ef4444; color:#fff; border:none; padding:6px 12px; border-radius:8px; cursor:pointer; font-weight:bold;">إغلاق ✖</button>
                 </div>
 
-                <div style="display:grid; grid-template-columns:2fr 1fr; gap:10px; margin-bottom:15px;">
-                    <input id="t-exam-title" type="text" placeholder="عنوان الاختبار (مثلاً: اختبار دوري 1)" style="padding:10px; border:1px solid #cbd5e1; border-radius:8px; font-family:inherit;">
+                <div style="display:grid; grid-template-columns:2fr 1fr; gap:10px; margin-bottom:14px;">
+                    <input id="t-exam-title" type="text" placeholder="عنوان الاختبار (مثلاً: اختبار درسي الطلائعيات والفطريات)" style="padding:10px; border:1px solid #cbd5e1; border-radius:8px; font-family:inherit;">
                     <input id="t-exam-mins" type="number" value="15" min="1" max="120" placeholder="المدة بالدقائق" style="padding:10px; border:1px solid #cbd5e1; border-radius:8px; font-family:inherit;">
                 </div>
 
-                <div style="margin-bottom:10px; font-weight:bold;">اختر الأسئلة من البنك (المختار: <span id="sel-q-count">0</span>):</div>
-                <div style="max-height:300px; overflow-y:auto; border:1px solid #cbd5e1; border-radius:8px; padding:10px; margin-bottom:15px;">
-                    ${listHtml}
+                <div style="background:#f8fafc; border:1px solid #e2e8f0; padding:12px; border-radius:10px; margin-bottom:14px;">
+                    <label style="display:block; font-weight:bold; margin-bottom:6px; color:#0f766e;">1️⃣ اختر المقرر الدراسي:</label>
+                    <select id="t-subject-filter" onchange="onTeacherSubjectChange()" style="width:100%; padding:10px; border:1px solid #cbd5e1; border-radius:8px; font-family:inherit; margin-bottom:10px;">
+                        <option value="all">جميع المقررات</option>
+                        ${subjOptions}
+                    </select>
+
+                    <label style="display:block; font-weight:bold; margin-bottom:6px; color:#0f766e;">2️⃣ حدد درساً واحداً أو أكثر (اتركها فارغة لعرض كل دروس المقرر):</label>
+                    <div id="t-lessons-box" style="display:flex; flex-wrap:wrap; gap:6px; max-height:130px; overflow-y:auto; padding:6px; background:#fff; border:1px solid #cbd5e1; border-radius:8px;"></div>
                 </div>
 
-                <button onclick="generateExamLink()" style="width:100%; background:#0f766e; color:#fff; border:none; padding:12px; border-radius:10px; font-weight:bold; cursor:pointer; font-family:inherit;">
+                <div style="display:flex; flex-wrap:wrap; justify-content:space-between; align-items:center; gap:8px; margin-bottom:8px;">
+                    <div style="font-weight:bold;">3️⃣ الأسئلة المطابقة (<span id="filtered-q-total">0</span>) | المختار للاختبار: <span id="sel-q-count" style="color:#0f766e; font-size:1.1rem;">0</span></div>
+                    <div style="display:flex; gap:6px;">
+                        <button type="button" onclick="selectAllFilteredQ(true)" style="background:#0284c7; color:#fff; border:none; padding:6px 12px; border-radius:6px; font-size:0.85rem; cursor:pointer; font-family:inherit;">تحديد الكل</button>
+                        <button type="button" onclick="selectRandomFilteredQ()" style="background:#f59e0b; color:#fff; border:none; padding:6px 12px; border-radius:6px; font-size:0.85rem; cursor:pointer; font-family:inherit;">🎲 اختيار عشوائي</button>
+                        <button type="button" onclick="selectAllFilteredQ(false)" style="background:#64748b; color:#fff; border:none; padding:6px 12px; border-radius:6px; font-size:0.85rem; cursor:pointer; font-family:inherit;">إلغاء التحديد</button>
+                    </div>
+                </div>
+
+                <div id="t-questions-list" style="max-height:260px; overflow-y:auto; border:1px solid #cbd5e1; border-radius:8px; padding:10px; margin-bottom:15px;"></div>
+
+                <button onclick="generateExamLink()" style="width:100%; background:#0f766e; color:#fff; border:none; padding:12px; border-radius:10px; font-weight:bold; cursor:pointer; font-family:inherit; font-size:1rem;">
                     🔗 توليد رابط الاختبار لنسخه وإرساله للطلاب
                 </button>
                 <div id="generated-link-box" style="display:none; margin-top:15px; background:#f0fdf4; border:1px solid #86efac; padding:12px; border-radius:8px;">
-                    <div style="font-weight:bold; color:#15803d; margin-bottom:6px;">✅ تم إنشاء الرابط! انسخه وأرسله لطلابك:</div>
+                    <div style="font-weight:bold; color:#15803d; margin-bottom:6px;">✅ تم إنشاء الرابط ونسخه! أرسله لطلابك:</div>
                     <input id="final-exam-url" type="text" readonly style="width:100%; padding:8px; border:1px solid #cbd5e1; border-radius:6px; direction:ltr;">
                 </div>
             </div>
         `;
+
+        onTeacherSubjectChange();
+    };
+
+    window.onTeacherSubjectChange = function() {
+        const subj = document.getElementById('t-subject-filter').value;
+        teacherSelectedLessons.clear();
+        const filteredBySubj = subj === 'all' ? questionsBank : questionsBank.filter(q => q.subject === subj);
+        const lessons = [...new Set(filteredBySubj.map(q => q.lesson))];
+
+        const lessonsBox = document.getElementById('t-lessons-box');
+        lessonsBox.innerHTML = lessons.map(lesson => `
+            <label style="display:inline-flex; align-items:center; gap:5px; background:#f1f5f9; padding:5px 10px; border-radius:20px; font-size:0.85rem; cursor:pointer; border:1px solid #cbd5e1;">
+                <input type="checkbox" value="${lesson}" onchange="toggleTeacherLesson(this.value, this.checked)">
+                <span>${lesson}</span>
+            </label>
+        `).join('');
+
+        renderTeacherFilteredQuestions();
+    };
+
+    window.toggleTeacherLesson = function(lesson, checked) {
+        if (checked) teacherSelectedLessons.add(lesson);
+        else teacherSelectedLessons.delete(lesson);
+        renderTeacherFilteredQuestions();
+    };
+
+    function renderTeacherFilteredQuestions() {
+        const subj = document.getElementById('t-subject-filter').value;
+        teacherCurrentFilteredIndices = [];
+
+        questionsBank.forEach((q, idx) => {
+            const matchSubj = (subj === 'all' || q.subject === subj);
+            const matchLesson = (teacherSelectedLessons.size === 0 || teacherSelectedLessons.has(q.lesson));
+            if (matchSubj && matchLesson) {
+                teacherCurrentFilteredIndices.push(idx);
+            }
+        });
+
+        document.getElementById('filtered-q-total').textContent = teacherCurrentFilteredIndices.length;
+        const listEl = document.getElementById('t-questions-list');
+
+        if (teacherCurrentFilteredIndices.length === 0) {
+            listEl.innerHTML = `<div style="text-align:center; color:#64748b; padding:20px;">لا توجد أسئلة مطابقة لهذا الاختيار.</div>`;
+            return;
+        }
+
+        listEl.innerHTML = teacherCurrentFilteredIndices.map(idx => {
+            const q = questionsBank[idx];
+            const isChecked = selectedForExam.has(idx) ? 'checked' : '';
+            return `
+                <label style="display:block; padding:8px; border-bottom:1px solid #f1f5f9; cursor:pointer;">
+                    <input type="checkbox" ${isChecked} onchange="toggleQSelect(${idx}, this.checked)">
+                    <span style="font-size:0.8rem; color:#0284c7; font-weight:bold;">[${q.subject} - ${q.lesson}]</span> ${q.question}
+                </label>
+            `;
+        }).join('');
+    }
+
+    window.selectAllFilteredQ = function(selectAll) {
+        teacherCurrentFilteredIndices.forEach(idx => {
+            if (selectAll) selectedForExam.add(idx);
+            else selectedForExam.delete(idx);
+        });
+        document.getElementById('sel-q-count').textContent = selectedForExam.size;
+        renderTeacherFilteredQuestions();
+    };
+
+    window.selectRandomFilteredQ = function() {
+        if (teacherCurrentFilteredIndices.length === 0) return;
+        const countStr = prompt(`كم سؤالاً عشوائياً تريد اختياره من هذه الدروس؟ (المتاح: ${teacherCurrentFilteredIndices.length})`, "10");
+        const num = parseInt(countStr, 10);
+        if (!num || num <= 0) return;
+
+        const shuffled = [...teacherCurrentFilteredIndices].sort(() => Math.random() - 0.5);
+        shuffled.slice(0, Math.min(num, shuffled.length)).forEach(idx => selectedForExam.add(idx));
+        document.getElementById('sel-q-count').textContent = selectedForExam.size;
+        renderTeacherFilteredQuestions();
     };
 
     window.toggleQSelect = function(idx, checked) {
