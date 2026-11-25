@@ -291,7 +291,8 @@
                     ${timerBadge}
                     <span>سؤال <strong>${currentExamIndex + 1}</strong> من <strong>${examQuestions.length}</strong></span>
                 </div>
-                <div style="font-size:0.85rem; color:#0284c7; margin-bottom:8px; font-weight:bold;">${q.subject} - ${q.lesson}</div>
+                <div style="font-size:0.85rem; color:#0284c7; margin-bottom:8px; font-weight:bold;">${q.subject} - ${q.lesson}${q.year ? ` <span style="background:#e0f2fe; color:#0369a1; padding:2px 8px; border-radius:999px; font-size:0.78rem; margin-right:6px;">${q.year}</span>` : ''}</div>
+
                 <h3 style="margin-top:0; margin-bottom:20px; line-height:1.6;">${q.question}</h3>
                 <div>${optionsHtml}</div>
                 <div style="display:flex; justify-content:space-between; margin-top:25px; gap:10px;">
